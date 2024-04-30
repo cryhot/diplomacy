@@ -162,8 +162,9 @@ class Map:
         self.__class__.__init__ = lambda *args, **kwargs: None
         instance = self.__class__(name=self.name, use_cache=False)
         self.__class__.__init__ = actual_init
+        memo[id(self)] = instance
         for key in self.__slots__:
-            setattr(instance, key, deepcopy(getattr(self, key)))
+            setattr(instance, key, deepcopy(getattr(self, key), memo=memo))
         return instance
 
     def __str__(self):

@@ -132,17 +132,14 @@ class Power(Jsonable):
         return text
 
     def __deepcopy__(self, memo):
-        """ Fast deep copy implementation (**not setting the game object**) """
+        """ Fast deep copy implementation """
         cls = self.__class__
         result = cls.__new__(cls)
+        memo[id(self)] = result
 
         # Deep copying
         for key in self.__slots__:
-            if key not in ['game']:
-                setattr(result, key, deepcopy(getattr(self, key)))
-
-        # Game
-        setattr(result, 'game', None)
+            setattr(result, key, deepcopy(getattr(self, key), memo=memo))
         return result
 
     def reinit(self, include_flags=6):

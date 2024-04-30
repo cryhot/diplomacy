@@ -403,16 +403,14 @@ class Game(Jsonable):
         cls = self.__class__
         result = cls.__new__(cls)
 
+        # Prepare memorized copies
+        memo[id(self)] = result
+        memo.setdefault(id(self.map), self.map)  # do not copy
+        if self.renderer: memo.setdefault(id(self.renderer), None)  # drop it
+
         # Deep copying
         for key in self._slots:
-            if key in ['map', 'renderer', 'powers']:
-                continue
-            setattr(result, key, deepcopy(getattr(self, key)))
-        setattr(result, 'map', self.map)
-        setattr(result, 'powers', {})
-        for power in self.powers.values():
-            result.powers[power.name] = deepcopy(power)
-            setattr(result.powers[power.name], 'game', result)
+            setattr(result, key, deepcopy(getattr(self, key), memo=memo))
         return result
 
     # ====================================================================
