@@ -413,6 +413,40 @@ class Game(Jsonable):
             setattr(result, key, deepcopy(getattr(self, key), memo=memo))
         return result
 
+    def __getstate__(self):
+        """ Pickle implementation """
+        kwargs = {
+            key: getattr(self, key)
+            for key in self._slots
+            if key not in ['_phase_wrapper_type']
+        }
+        for key in ['order_history', 'message_history', 'state_history', 'result_history']:
+            kwargs[key] = {
+                key.value: value
+                for key, value in kwargs[key].items()
+            }
+        return kwargs
+
+    def __setstate__(self, state):
+        """ Pickle implementation """
+        for key, value in state.items():
+            setattr(self, key, value)
+
+        self._phase_wrapper_type = common.str_cmp_class(self.map.compare_phases)
+
+        self.order_history = SortedDict(self._phase_wrapper_type, dict,
+                                        {self._phase_wrapper_type(key): value
+                                         for key, value in self.order_history.items()})
+        self.message_history = SortedDict(self._phase_wrapper_type, SortedDict,
+                                          {self._phase_wrapper_type(key): value
+                                           for key, value in self.message_history.items()})
+        self.state_history = SortedDict(self._phase_wrapper_type, dict,
+                                        {self._phase_wrapper_type(key): value
+                                         for key, value in self.state_history.items()})
+        self.result_history = SortedDict(self._phase_wrapper_type, dict,
+                                         {self._phase_wrapper_type(key): value
+                                          for key, value in self.result_history.items()}) 
+
     # ====================================================================
     #   Public Interface
     # ====================================================================
